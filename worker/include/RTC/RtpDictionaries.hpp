@@ -128,6 +128,7 @@ namespace RTC
 			TOFFSET                = 12,
 			ABS_CAPTURE_TIME       = 13,
 			PLAYOUT_DELAY          = 14,
+			VIDEO_TIMING           = 8,
 		};
 
 	public:

@@ -322,7 +322,8 @@ export type RtpHeaderExtensionUri =
 	| 'http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01'
 	| 'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time'
 	| 'http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time'
-	| 'http://www.webrtc.org/experiments/rtp-hdrext/playout-delay';
+	| 'http://www.webrtc.org/experiments/rtp-hdrext/playout-delay'
+	| 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing';
 
 /**
  * Defines a RTP header extension within the RTP parameters. The list of RTP
@@ -763,6 +764,10 @@ export function rtpHeaderExtensionUriFromFbs(
 		case FbsRtpHeaderExtensionUri.PlayoutDelay: {
 			return 'http://www.webrtc.org/experiments/rtp-hdrext/playout-delay';
 		}
+
+		case FbsRtpHeaderExtensionUri.VideoTiming: {
+			return 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing';
+		}
 	}
 }
 
@@ -816,6 +821,10 @@ export function rtpHeaderExtensionUriToFbs(
 
 		case 'http://www.webrtc.org/experiments/rtp-hdrext/playout-delay': {
 			return FbsRtpHeaderExtensionUri.PlayoutDelay;
+		}
+
+		case 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing': {
+			return FbsRtpHeaderExtensionUri.VideoTiming;
 		}
 
 		default: {

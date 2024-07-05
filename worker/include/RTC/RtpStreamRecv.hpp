@@ -5,7 +5,9 @@
 #include "RTC/RTCP/XrDelaySinceLastRr.hpp"
 #include "RTC/RateCalculator.hpp"
 #include "RTC/RtpStream.hpp"
+#include "RTC/VideoTimingEstimator.hpp"
 #include "handles/TimerHandle.hpp"
+
 #include <vector>
 
 namespace RTC
@@ -85,6 +87,8 @@ namespace RTC
 	private:
 		void CalculateJitter(uint32_t rtpTimestamp);
 		void UpdateScore();
+		void CalculateTimingInfo(RTC::RtpPacket* packet);
+		int64_t RtpTimestampToMsTimestamp(uint32_t rtpTimestamp);
 
 		/* Pure virtual methods inherited from RTC::RtpStream. */
 	public:
@@ -131,6 +135,12 @@ namespace RTC
 		TransmissionCounter transmissionCounter;
 		// Just valid media.
 		RTC::RtpDataCounter mediaTransmissionCounter;
+		// calculate extended RTP timestamps
+		uint32_t lastRtpTimestamp;
+		int64_t lastUnwrappedRtpTimestamp;
+		bool receiverRtpTimestamp{ false };
+		// estimate the consumer send time
+		VideoTimingEstimator::VideoTimingEstimatorPtr videoTimingEstimator;
 	};
 } // namespace RTC
 

@@ -1555,6 +1555,7 @@ namespace RTC
 		packet->SetRepairedRidExtensionId(this->recvRtpHeaderExtensionIds.rrid);
 		packet->SetAbsSendTimeExtensionId(this->recvRtpHeaderExtensionIds.absSendTime);
 		packet->SetTransportWideCc01ExtensionId(this->recvRtpHeaderExtensionIds.transportWideCc01);
+		// packet->SetVideoTimingExtensionId(this->recvRtpHeaderExtensionIds.videoTiming);
 
 		auto nowMs = DepLibUV::GetTimeMs();
 
@@ -2451,8 +2452,11 @@ namespace RTC
 		packet->logger.Sent();
 #endif
 
+		auto currentTime = DepLibUV::GetTimeMs();
 		// Update abs-send-time if present.
-		packet->UpdateAbsSendTime(DepLibUV::GetTimeMs());
+		packet->UpdateAbsSendTime(currentTime);
+		// Update video timing extension if present.
+		packet->UpdateVideoTimingSfuExitTime(currentTime);
 
 		// Update transport wide sequence number if present.
 		// clang-format off

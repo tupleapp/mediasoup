@@ -53,6 +53,11 @@ namespace RTC
 				return RtpHeaderExtensionUri::Type::PLAYOUT_DELAY;
 			}
 
+			case FBS::RtpParameters::RtpHeaderExtensionUri::VideoTiming:
+			{
+				return RtpHeaderExtensionUri::Type::VIDEO_TIMING;
+			}
+
 			case FBS::RtpParameters::RtpHeaderExtensionUri::TimeOffset:
 			{
 				return RtpHeaderExtensionUri::Type::TOFFSET;
@@ -128,6 +133,11 @@ namespace RTC
 			case RtpHeaderExtensionUri::Type::PLAYOUT_DELAY:
 			{
 				return FBS::RtpParameters::RtpHeaderExtensionUri::PlayoutDelay;
+			}
+
+			case RtpHeaderExtensionUri::Type::VIDEO_TIMING:
+			{
+				return FBS::RtpParameters::RtpHeaderExtensionUri::VideoTiming;
 			}
 
 			case RtpHeaderExtensionUri::Type::TOFFSET:

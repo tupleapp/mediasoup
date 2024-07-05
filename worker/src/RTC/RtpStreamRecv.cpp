@@ -196,7 +196,8 @@ namespace RTC
 	  : RTC::RtpStream::RtpStream(listener, params, 10), sendNackDelayMs(sendNackDelayMs),
 	    useRtpInactivityCheck(useRtpInactivityCheck),
 	    transmissionCounter(
-	      params.spatialLayers, params.temporalLayers, this->params.useDtx ? 6000 : 2500)
+	      params.spatialLayers, params.temporalLayers, this->params.useDtx ? 6000 : 2500),
+	    videoTimingEstimator(nullptr, nullptr)
 	{
 		MS_TRACE();
 
@@ -215,6 +216,11 @@ namespace RTC
 
 			this->inactivityCheckPeriodicTimer->Start(
 			  this->params.useDtx ? InactivityCheckIntervalWithDtx : InactivityCheckInterval);
+		}
+
+		if (this->params.mimeType.type == RtpCodecMimeType::Type::VIDEO)
+		{
+			videoTimingEstimator = VideoTimingEstimator::Create();
 		}
 	}
 
@@ -302,6 +308,9 @@ namespace RTC
 
 		// Calculate Jitter.
 		CalculateJitter(packet->GetTimestamp());
+
+		// Calculate video timing info
+		CalculateTimingInfo(packet);
 
 		// Padding only packet, do not consider it for counter increase nor
 		// stream activation.
@@ -585,6 +594,16 @@ namespace RTC
 
 		// Update the score with the current RR.
 		UpdateScore();
+
+		// feed VideoTimingEstimator with timeSend/timeReceived data
+		if (this->videoTimingEstimator && GetClockRate() != 0u)
+		{
+			int64_t rtpTsMs = RtpTimestampToMsTimestamp(
+			  this->lastSenderReportTs); // static_cast<int64_t>(extendedRtpTimestamp)*1000/GetClockRate();
+
+			this->videoTimingEstimator->OnPacketReceived(
+			  rtpTsMs, static_cast<int64_t>(this->lastSrReceived));
+		}
 	}
 
 	void RtpStreamRecv::ReceiveRtxRtcpSenderReport(RTC::RTCP::SenderReport* report)
@@ -639,6 +658,12 @@ namespace RTC
 		if (this->params.useNack)
 		{
 			this->nackGenerator->UpdateRtt(static_cast<uint32_t>(this->rtt));
+		}
+
+		// Tell it to the VideoTimingEstimator
+		if (this->videoTimingEstimator)
+		{
+			this->videoTimingEstimator->OnRtt(static_cast<int64_t>(this->rtt));
 		}
 	}
 
@@ -859,6 +884,117 @@ namespace RTC
 
 		// Call the parent method for update score.
 		RTC::RtpStream::UpdateScore(score);
+	}
+
+	void RtpStreamRecv::CalculateTimingInfo(RTC::RtpPacket* packet)
+	{
+		MS_TRACE();
+
+		if (!this->videoTimingEstimator || GetClockRate() == 0u)
+		{
+			return;
+		}
+
+		uint8_t flag;
+		uint16_t encodeStart;
+		uint16_t encodeEnd;
+		uint16_t packetizationComplete;
+		uint16_t pacerExit;
+		uint16_t network1;
+		uint16_t network2;
+
+		if (!packet->ReadVideoTiming(
+		      flag, encodeStart, encodeEnd, packetizationComplete, pacerExit, network1, network2))
+		{
+			return;
+		}
+
+		int64_t receivedTime     = static_cast<int64_t>(DepLibUV::GetTimeMs());
+		int64_t captureTime      = RtpTimestampToMsTimestamp(packet->GetTimestamp());
+		int64_t producerSendTime = 0;
+
+		if (network1 == 0 && network2 == 0)
+		{
+			// network1 and network2 are 0 when this packet is comming from a peer producer
+			producerSendTime = captureTime + pacerExit;
+		}
+		else
+		{
+			// network1 and network2 are not 0 when this packet is comming from an SFU node
+			producerSendTime = captureTime + network2;
+		}
+
+		int64_t estimatedProducerSendTime = 0;
+		bool hasEstimation                = this->videoTimingEstimator->OnVideoTiming(
+      producerSendTime, receivedTime, estimatedProducerSendTime);
+
+		if (!hasEstimation)
+		{
+			return;
+		}
+
+		int64_t estimatedCaptureTime = 0;
+
+		if (network1 == 0 && network2 == 0)
+		{
+			estimatedCaptureTime = estimatedProducerSendTime - pacerExit;
+		}
+		else
+		{
+			estimatedCaptureTime = estimatedProducerSendTime - network2;
+		}
+
+		packet->SetEstimatedCaptureTime(estimatedCaptureTime);
+
+		if (network1 == 0 && network2 == 0)
+		{
+			packet->UpdateVideoTimingSfuEnterTime(receivedTime);
+		}
+	}
+
+	int64_t RtpStreamRecv::RtpTimestampToMsTimestamp(uint32_t rtpTimestamp)
+	{
+		if (GetClockRate() == 0u)
+		{
+			return -1;
+		}
+
+		// unwrap the rtp timestamp
+		if (!this->receiverRtpTimestamp)
+		{
+			this->lastRtpTimestamp          = rtpTimestamp;
+			this->lastUnwrappedRtpTimestamp = static_cast<int64_t>(rtpTimestamp);
+			this->receiverRtpTimestamp      = true;
+		}
+		else
+		{
+			constexpr int64_t BackwardAdjustment = int64_t{ std::numeric_limits<uint32_t>::max() } + 1;
+			constexpr uint32_t MaxDist           = std::numeric_limits<uint32_t>::max() / 2u + 1u;
+
+			uint32_t diff        = rtpTimestamp - this->lastRtpTimestamp;
+			int64_t diffExtended = static_cast<int64_t>(diff);
+			bool aheadOrAt       = false;
+
+			if (diff == MaxDist)
+			{
+				aheadOrAt = this->lastRtpTimestamp < rtpTimestamp;
+			}
+			else
+			{
+				aheadOrAt = diff < MaxDist;
+			}
+
+			if (!aheadOrAt)
+			{
+				diffExtended -= BackwardAdjustment;
+			}
+
+			this->lastUnwrappedRtpTimestamp += diffExtended;
+			this->lastRtpTimestamp = rtpTimestamp;
+		}
+
+		// convert the unwraped timestamp to ms
+		return this->lastUnwrappedRtpTimestamp * 1000 / GetClockRate();
 	}
 
 	void RtpStreamRecv::UserOnSequenceNumberReset()

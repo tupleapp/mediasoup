@@ -74,6 +74,7 @@ enum RtpHeaderExtensionUri: uint8 {
     AbsSendTime,
     AbsCaptureTime,
     PlayoutDelay,
+    VideoTiming,
 }
 
 table RtpHeaderExtensionParameters {

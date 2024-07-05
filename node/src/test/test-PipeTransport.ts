@@ -405,6 +405,12 @@ test('router.pipeToRouter() succeeds with video', async () => {
 			encrypt: false,
 			parameters: {},
 		},
+		{
+			uri: 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing',
+			id: 8,
+			encrypt: false,
+			parameters: {},
+		},
 	]);
 
 	expect(pipeConsumer.type).toBe('pipe');
@@ -469,6 +475,12 @@ test('router.pipeToRouter() succeeds with video', async () => {
 		{
 			uri: 'http://www.webrtc.org/experiments/rtp-hdrext/playout-delay',
 			id: 14,
+			encrypt: false,
+			parameters: {},
+		},
+		{
+			uri: 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing',
+			id: 8,
 			encrypt: false,
 			parameters: {},
 		},
@@ -588,6 +600,12 @@ test('router.createPipeTransport() with enableRtx succeeds', async () => {
 		{
 			uri: 'http://www.webrtc.org/experiments/rtp-hdrext/playout-delay',
 			id: 14,
+			encrypt: false,
+			parameters: {},
+		},
+		{
+			uri: 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing',
+			id: 8,
 			encrypt: false,
 			parameters: {},
 		},

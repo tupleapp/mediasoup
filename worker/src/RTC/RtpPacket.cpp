@@ -314,6 +314,10 @@ namespace RTC
 				  maxDelay);
 			}
 		}
+		if (this->videoTimingExtensionId != 0u)
+		{
+			// DAVIDN TODO
+		}
 		MS_DUMP("  csrc count: %" PRIu8, this->header->csrcCount);
 		MS_DUMP("  marker: %s", HasMarker() ? "true" : "false");
 		MS_DUMP("  payload type: %" PRIu8, GetPayloadType());
@@ -402,6 +406,7 @@ namespace RTC
 		this->ssrcAudioLevelExtensionId    = 0u;
 		this->videoOrientationExtensionId  = 0u;
 		this->playoutDelayExtensionId      = 0u;
+		this->videoTimingExtensionId       = 0u;
 
 		// Clear the One-Byte and Two-Bytes extension elements maps.
 		std::fill(std::begin(this->oneByteExtensions), std::end(this->oneByteExtensions), nullptr);
@@ -764,10 +769,13 @@ namespace RTC
 		packet->ssrcAudioLevelExtensionId    = this->ssrcAudioLevelExtensionId;
 		packet->videoOrientationExtensionId  = this->videoOrientationExtensionId;
 		packet->playoutDelayExtensionId      = this->playoutDelayExtensionId;
+		packet->videoTimingExtensionId       = this->videoTimingExtensionId;
 		// Assign the payload descriptor handler.
 		packet->payloadDescriptorHandler = this->payloadDescriptorHandler;
 		// Store allocated buffer.
 		packet->buffer = buffer;
+		// Assign estimatedCaptureTime
+		packet->estimatedCaptureTimeMs = this->estimatedCaptureTimeMs;
 
 		return packet;
 	}

@@ -514,6 +514,11 @@ fn pipe_to_router_succeeds_with_video() {
                     id: 14,
                     encrypt: false,
                 },
+                RtpHeaderExtensionParameters {
+                    uri: RtpHeaderExtensionUri::VideoTiming,
+                    id: 8,
+                    encrypt: false,
+                }
             ],
         );
         assert_eq!(pipe_consumer.r#type(), ConsumerType::Pipe);
@@ -576,6 +581,11 @@ fn pipe_to_router_succeeds_with_video() {
                     id: 14,
                     encrypt: false,
                 },
+                RtpHeaderExtensionParameters {
+                    uri: RtpHeaderExtensionUri::VideoTiming,
+                    id: 8,
+                    encrypt: false,
+                }
             ],
         );
         assert!(pipe_producer.paused());
@@ -778,6 +788,11 @@ fn create_with_enable_rtx_succeeds() {
                     id: 14,
                     encrypt: false,
                 },
+                RtpHeaderExtensionParameters {
+                    uri: RtpHeaderExtensionUri::VideoTiming,
+                    id: 8,
+                    encrypt: false,
+                }
             ],
         );
         assert_eq!(pipe_consumer.r#type(), ConsumerType::Pipe);

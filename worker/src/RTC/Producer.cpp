@@ -197,6 +197,11 @@ namespace RTC
 			{
 				this->rtpHeaderExtensionIds.playoutDelay = exten.id;
 			}
+
+			if (this->rtpHeaderExtensionIds.videoTiming == 0u && exten.type == RTC::RtpHeaderExtensionUri::Type::VIDEO_TIMING)
+			{
+				this->rtpHeaderExtensionIds.videoTiming = exten.id;
+			}
 		}
 
 		// Set the RTCP report generation interval.
@@ -600,6 +605,9 @@ namespace RTC
 		if (packet->GetSsrc() == rtpStream->GetSsrc())
 		{
 			result = ReceiveRtpPacketResult::MEDIA;
+
+			// Video timing is used by RtpStreamRecv to calculate the timing information
+			packet->SetVideoTimingExtensionId(this->rtpHeaderExtensionIds.videoTiming);
 
 			// Process the packet.
 			if (!rtpStream->ReceivePacket(packet))
@@ -1390,6 +1398,19 @@ namespace RTC
 					extensions.emplace_back(
 					  static_cast<uint8_t>(RTC::RtpHeaderExtensionUri::Type::TOFFSET), extenLen, bufferPtr);
 
+					bufferPtr += extenLen;
+				}
+
+				// Proxy video timing http://www.webrtc.org/experiments/rtp-hdrext/video-timing
+				extenValue = packet->GetExtension(this->rtpHeaderExtensionIds.videoTiming, extenLen);
+
+				if (extenValue && packet->GetEstimatedCaptureTime() != 0)
+				{
+					std::memcpy(bufferPtr, extenValue, extenLen);
+
+					extensions.emplace_back(
+					  static_cast<uint8_t>(RTC::RtpHeaderExtensionUri::Type::VIDEO_TIMING), extenLen, bufferPtr);
+
 					// Not needed since this is the latest added extension.
 					// bufferPtr += extenLen;
 				}
@@ -1416,6 +1437,8 @@ namespace RTC
 			  static_cast<uint8_t>(RTC::RtpHeaderExtensionUri::Type::VIDEO_ORIENTATION));
 			packet->SetPlayoutDelayExtensionId(
 			  static_cast<uint8_t>(RTC::RtpHeaderExtensionUri::Type::PLAYOUT_DELAY));
+			packet->SetVideoTimingExtensionId(
+			  static_cast<uint8_t>(RTC::RtpHeaderExtensionUri::Type::VIDEO_TIMING));
 		}
 
 		return true;

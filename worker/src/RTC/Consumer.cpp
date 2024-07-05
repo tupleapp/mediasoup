@@ -90,6 +90,11 @@ namespace RTC
 				this->rtpHeaderExtensionIds.playoutDelay = exten.id;
 			}
 
+			if (this->rtpHeaderExtensionIds.videoTiming == 0u && exten.type == RTC::RtpHeaderExtensionUri::Type::VIDEO_TIMING)
+			{
+				this->rtpHeaderExtensionIds.videoTiming = exten.id;
+			}
+
 			if (this->rtpHeaderExtensionIds.absSendTime == 0u && exten.type == RTC::RtpHeaderExtensionUri::Type::ABS_SEND_TIME)
 			{
 				this->rtpHeaderExtensionIds.absSendTime = exten.id;

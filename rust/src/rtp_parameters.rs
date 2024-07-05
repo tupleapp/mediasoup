@@ -588,6 +588,9 @@ pub enum RtpHeaderExtensionUri {
     /// <http://www.webrtc.org/experiments/rtp-hdrext/playout-delay>
     #[serde(rename = "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay")]
     PlayoutDelay,
+    /// <http://www.webrtc.org/experiments/rtp-hdrext/video-timing>
+    #[serde(rename = "http://www.webrtc.org/experiments/rtp-hdrext/video-timing")]
+    VideoTiming,
 
     #[doc(hidden)]
     #[serde(other, rename = "unsupported")]
@@ -627,6 +630,9 @@ impl RtpHeaderExtensionUri {
             RtpHeaderExtensionUri::PlayoutDelay => {
                 rtp_parameters::RtpHeaderExtensionUri::PlayoutDelay
             }
+            RtpHeaderExtensionUri::VideoTiming => {
+                rtp_parameters::RtpHeaderExtensionUri::VideoTiming
+            }
             RtpHeaderExtensionUri::Unsupported => panic!("Invalid RTP extension header URI"),
         }
     }
@@ -663,6 +669,9 @@ impl RtpHeaderExtensionUri {
             rtp_parameters::RtpHeaderExtensionUri::PlayoutDelay => {
                 RtpHeaderExtensionUri::PlayoutDelay
             }
+            rtp_parameters::RtpHeaderExtensionUri::VideoTiming => {
+                RtpHeaderExtensionUri::VideoTiming
+            }
         }
     }
 }
@@ -690,6 +699,7 @@ impl FromStr for RtpHeaderExtensionUri {
                 Ok(Self::AbsCaptureTime)
             }
             "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay" => Ok(Self::PlayoutDelay),
+            "http://www.webrtc.org/experiments/rtp-hdrext/video-timing" => Ok(Self::VideoTiming),
             _ => Err(RtpHeaderExtensionUriParseError::Unsupported),
         }
     }
@@ -723,6 +733,9 @@ impl RtpHeaderExtensionUri {
             }
             RtpHeaderExtensionUri::PlayoutDelay => {
                 "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"
+            }
+            RtpHeaderExtensionUri::VideoTiming => {
+                "http://www.webrtc.org/experiments/rtp-hdrext/video-timing"
             }
             RtpHeaderExtensionUri::Unsupported => "unsupported",
         }

@@ -147,6 +147,16 @@ namespace RTC
 	public:
 		~RtpPacket();
 
+		uint64_t GetEstimatedCaptureTime() const
+		{
+			return this->estimatedCaptureTimeMs;
+		}
+
+		void SetEstimatedCaptureTime(uint64_t estimatedCaptureTimeMs)
+		{
+			this->estimatedCaptureTimeMs = estimatedCaptureTimeMs;
+		}
+
 		void Dump() const;
 		flatbuffers::Offset<FBS::RtpPacket::Dump> FillBuffer(flatbuffers::FlatBufferBuilder& builder) const;
 
@@ -312,6 +322,11 @@ namespace RTC
 		void SetPlayoutDelayExtensionId(uint8_t id)
 		{
 			this->playoutDelayExtensionId = id;
+		}
+
+		void SetVideoTimingExtensionId(uint8_t id)
+		{
+			this->videoTimingExtensionId = id;
 		}
 
 		bool ReadMid(std::string& mid) const
@@ -510,6 +525,88 @@ namespace RTC
 			return true;
 		}
 
+		bool ReadVideoTiming(
+		  uint8_t& flags,
+		  uint16_t& encodeStart,
+		  uint16_t& encodeEnd,
+		  uint16_t& packetizationComplete,
+		  uint16_t& pacerExit,
+		  uint16_t& network1,
+		  uint16_t& network2) const
+		{
+			uint8_t extenLen;
+			uint8_t* extenValue = GetExtension(this->videoTimingExtensionId, extenLen);
+
+			if (!extenValue || extenLen != 13u)
+			{
+				return false;
+			}
+
+			flags                 = Utils::Byte::Get1Byte(extenValue, 0);
+			encodeStart           = Utils::Byte::Get2Bytes(extenValue, 1);
+			encodeEnd             = Utils::Byte::Get2Bytes(extenValue, 3);
+			packetizationComplete = Utils::Byte::Get2Bytes(extenValue, 5);
+			pacerExit             = Utils::Byte::Get2Bytes(extenValue, 7);
+			network1              = Utils::Byte::Get2Bytes(extenValue, 9);
+			network2              = Utils::Byte::Get2Bytes(extenValue, 11);
+
+			return true;
+		}
+
+		bool UpdateVideoTimingSfuEnterTime(uint64_t ms) const
+		{
+			if (this->estimatedCaptureTimeMs == 0)
+			{
+				return false;
+			}
+
+			uint8_t extenLen;
+			uint8_t* extenValue = GetExtension(this->videoTimingExtensionId, extenLen);
+
+			if (!extenValue || extenLen != 13u)
+			{
+				return false;
+			}
+
+			auto sfuEnterTime = ms - this->estimatedCaptureTimeMs;
+
+			if (sfuEnterTime > std::numeric_limits<uint16_t>::max())
+			{
+				return false;
+			}
+
+			Utils::Byte::Set2Bytes(extenValue, 9, static_cast<uint16_t>(sfuEnterTime));
+
+			return true;
+		}
+
+		bool UpdateVideoTimingSfuExitTime(uint64_t ms) const
+		{
+			if (this->estimatedCaptureTimeMs == 0)
+			{
+				return false;
+			}
+
+			uint8_t extenLen;
+			uint8_t* extenValue = GetExtension(this->videoTimingExtensionId, extenLen);
+
+			if (!extenValue || extenLen != 13u)
+			{
+				return false;
+			}
+
+			auto sfuExitTime = ms - this->estimatedCaptureTimeMs;
+
+			if (sfuExitTime > std::numeric_limits<uint16_t>::max())
+			{
+				return false;
+			}
+
+			Utils::Byte::Set2Bytes(extenValue, 11, static_cast<uint16_t>(sfuExitTime));
+
+			return true;
+		}
+
 		bool HasExtension(uint8_t id) const
 		{
 			if (id == 0u)
@@ -694,6 +791,7 @@ namespace RTC
 		uint8_t ssrcAudioLevelExtensionId{ 0u };
 		uint8_t videoOrientationExtensionId{ 0u };
 		uint8_t playoutDelayExtensionId{ 0u };
+		uint8_t videoTimingExtensionId{ 0u };
 		uint8_t* payload{ nullptr };
 		size_t payloadLength{ 0u };
 		uint8_t payloadPadding{ 0u };
@@ -703,6 +801,8 @@ namespace RTC
 		// Buffer where this packet is allocated, can be `nullptr` if packet was
 		// parsed from externally provided buffer.
 		uint8_t* buffer{ nullptr };
+		// capture time estimated, synchronized with the local timer
+		uint64_t estimatedCaptureTimeMs{ 0u };
 	};
 } // namespace RTC
 
