@@ -124,11 +124,12 @@ SCENARIO("receive RTP packets and trigger NACK", "[rtp][rtpstream]")
 	{
 		0x80, 0x01, 0x00, 0x01,
 		0x00, 0x00, 0x00, 0x04,
-		0x00, 0x00, 0x00, 0x05
+		0x00, 0x00, 0x00, 0x05,
+		0x00, 0x00, 0x00, 0x00 // Extra space for RTX encoding.
 	};
 	// clang-format on
 
-	RtpPacket* packet = RtpPacket::Parse(buffer, sizeof(buffer));
+	RtpPacket* packet = RtpPacket::Parse(buffer, 12);
 
 	if (!packet)
 	{
@@ -137,11 +138,13 @@ SCENARIO("receive RTP packets and trigger NACK", "[rtp][rtpstream]")
 
 	RtpStream::Params params;
 
-	params.ssrc      = packet->GetSsrc();
-	params.clockRate = 90000;
-	params.useNack   = true;
-	params.usePli    = true;
-	params.useFir    = false;
+	params.ssrc           = packet->GetSsrc();
+	params.rtxSsrc        = 1234;
+	params.rtxPayloadType = 96;
+	params.clockRate      = 90000;
+	params.useNack        = true;
+	params.usePli         = true;
+	params.useFir         = false;
 
 	SECTION("NACK one packet")
 	{
@@ -170,6 +173,39 @@ SCENARIO("receive RTP packets and trigger NACK", "[rtp][rtpstream]")
 		rtpStream.ReceivePacket(packet);
 
 		REQUIRE(listener.nackedSeqNumbers.size() == 0);
+	}
+
+	SECTION("receive RTX before corresponding RTP")
+	{
+		RtpStreamRecvListener listener;
+		RtpStreamRecv rtpStream(&listener, params, SendNackDelay, UseRtpInactivityCheck);
+
+		packet->SetSequenceNumber(1);
+		rtpStream.ReceivePacket(packet);
+
+		packet->SetSequenceNumber(2);
+		rtpStream.ReceivePacket(packet);
+
+		packet->SetSequenceNumber(3);
+		rtpStream.ReceivePacket(packet);
+
+		packet->SetSequenceNumber(4);
+		rtpStream.ReceivePacket(packet);
+
+		packet->SetSequenceNumber(5);
+		rtpStream.ReceivePacket(packet);
+
+		// Sequence number 6 arrives via RTX before the original RTP packet.
+
+		auto originalSsrc        = packet->GetSsrc();
+		auto originalPayloadType = packet->GetPayloadType();
+
+		packet->SetSequenceNumber(6);
+		packet->RtxEncode(params.rtxPayloadType, params.rtxSsrc, 1000 /*seq=*/);
+
+		REQUIRE(rtpStream.ReceiveRtxPacket(packet));
+
+		packet->RtxDecode(originalPayloadType, originalSsrc);
 	}
 
 	SECTION("wrapping sequence numbers")

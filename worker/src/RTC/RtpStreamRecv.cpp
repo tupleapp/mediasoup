@@ -426,7 +426,8 @@ namespace RTC
 		RTC::RtpStream::PacketRetransmitted(packet);
 
 		// Pass the packet to the NackGenerator and return true just if this was a
-		// NACKed packet.
+		// NACKed packet or a RTX packet containing a non yet seen original RTP
+		// packet.
 		if (this->nackGenerator->ReceivePacket(packet, /*isRecovered*/ true))
 		{
 			// Padding only packet, do not consider it for counter increase nor
