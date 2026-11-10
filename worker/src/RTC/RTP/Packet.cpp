@@ -9,6 +9,7 @@
 #include <iterator> // std::ostream_iterator
 #include <limits>   // std::numeric_limits
 #include <sstream>  // std::ostringstream
+#include <utility>  // std::cmp_greater()
 
 namespace RTC
 {
@@ -1408,7 +1409,7 @@ namespace RTC
 
 			const int64_t sfuEnterTime = nowMs - this->estimatedCaptureTimeMs;
 
-			if (sfuEnterTime < 0 || sfuEnterTime > std::numeric_limits<uint16_t>::max())
+			if (sfuEnterTime < 0 || std::cmp_greater(sfuEnterTime, std::numeric_limits<uint16_t>::max()))
 			{
 				return false;
 			}
@@ -1437,7 +1438,7 @@ namespace RTC
 
 			const int64_t sfuExitTime = nowMs - this->estimatedCaptureTimeMs;
 
-			if (sfuExitTime < 0 || sfuExitTime > std::numeric_limits<uint16_t>::max())
+			if (sfuExitTime < 0 || std::cmp_greater(sfuExitTime, std::numeric_limits<uint16_t>::max()))
 			{
 				return false;
 			}
