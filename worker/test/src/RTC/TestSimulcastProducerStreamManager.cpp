@@ -9,6 +9,7 @@
 #include "Utils.hpp"
 #include "test/include/RTC/RTP/rtpCommon.hpp"
 #include "mocks/include/MockShared.hpp"
+#include <list>
 
 namespace
 {
@@ -205,6 +206,12 @@ namespace
 		return manager;
 	}
 
+	// One Shared per stream, since streams with temporal layers run a labeled
+	// timer and the mocked Shared doesn't allow two alive timers with the same
+	// label. They must outlive the streams.
+	// NOLINTNEXTLINE(readability-identifier-naming)
+	std::list<mocks::MockShared> streamShareds;
+
 	std::unique_ptr<RTC::RTP::RtpStreamRecv> createRtpStreamRecv(uint32_t ssrc, uint8_t temporalLayers = 1)
 	{
 		RTC::RTP::RtpStream::Params params;
@@ -213,8 +220,14 @@ namespace
 		params.clockRate      = 90000;
 		params.temporalLayers = temporalLayers;
 
+		auto& streamShared = streamShareds.emplace_back(/*getTimeUs*/
+		                                                []() -> int64_t
+		                                                {
+			                                                return nowUs;
+		                                                });
+
 		return std::make_unique<RTC::RTP::RtpStreamRecv>(
-		  std::addressof(streamRecvListener), std::addressof(shared), params, 0, false);
+		  std::addressof(streamRecvListener), std::addressof(streamShared), params, 0, false);
 	}
 
 	// Feed packets into the RtpStreamRecv so GetBitrate() returns non-zero. They

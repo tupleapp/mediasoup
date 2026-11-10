@@ -204,6 +204,11 @@ namespace RTC
 			{
 				this->rtpHeaderExtensionIds.mediasoupPacketId = exten.id;
 			}
+
+			if (this->rtpHeaderExtensionIds.videoTiming == 0 && exten.type == RTC::RtpHeaderExtensionUri::Type::VIDEO_TIMING)
+			{
+				this->rtpHeaderExtensionIds.videoTiming = exten.id;
+			}
 		}
 
 		// Fill supported codec payload types.

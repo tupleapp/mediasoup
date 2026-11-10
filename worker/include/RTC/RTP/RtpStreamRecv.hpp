@@ -10,6 +10,7 @@
 #include "RTC/RTCP/XrDelaySinceLastRr.hpp"
 #include "RTC/RTP/RtpStream.hpp"
 #include "RTC/RateCalculator.hpp"
+#include "RTC/VideoTimingEstimator.hpp"
 #include <vector>
 
 namespace RTC
@@ -303,6 +304,10 @@ namespace RTC
 
 			void UpdateScore();
 
+			void CalculateTimingInfo(RTP::Packet* packet, int64_t receivedAtUs);
+
+			int64_t RtpTimestampToMsTimestamp(uint32_t rtpTimestamp);
+
 			/**
 			 * Interpolate the capture instant of `ts` from a reference pair, all of them
 			 * expressed in the remote sender's wall clock.
@@ -368,6 +373,12 @@ namespace RTC
 			// Template dependency structure for Dependency Descriptor.
 			std::unique_ptr<RTP::Codecs::DependencyDescriptor::TemplateDependencyStructure>
 			  templateDependencyStructure;
+			// Unwrapping of RTP timestamps for the video-timing extension.
+			uint32_t lastRtpTimestamp{ 0 };
+			int64_t lastUnwrappedRtpTimestamp{ 0 };
+			bool receivedRtpTimestamp{ false };
+			// Estimates the producer send time out of the video-timing extension.
+			VideoTimingEstimator::VideoTimingEstimatorPtr videoTimingEstimator{ nullptr, nullptr };
 		};
 	} // namespace RTP
 } // namespace RTC

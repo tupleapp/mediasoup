@@ -7,7 +7,9 @@
 #include "RTC/Consts.hpp"
 #include <cstring>  // std::memmove(), std::memset()
 #include <iterator> // std::ostream_iterator
+#include <limits>   // std::numeric_limits
 #include <sstream>  // std::ostringstream
+#include <utility>  // std::cmp_greater()
 
 namespace RTC
 {
@@ -373,6 +375,33 @@ namespace RTC
 					}
 				}
 
+				{
+					uint8_t flags{ 0 };
+					uint16_t encodeStart{ 0 };
+					uint16_t encodeEnd{ 0 };
+					uint16_t packetizationComplete{ 0 };
+					uint16_t pacerExit{ 0 };
+					uint16_t network1{ 0 };
+					uint16_t network2{ 0 };
+
+					if (ReadVideoTiming(flags, encodeStart, encodeEnd, packetizationComplete, pacerExit, network1, network2))
+					{
+						MS_DUMP_CLEAN(
+						  indentation + 1,
+						  "  videoTiming: id:%" PRIu8 ", flags:%" PRIu8 ", encode start:%" PRIu16
+						  ", encode end:%" PRIu16 ", packetization:%" PRIu16 ", pacer exit:%" PRIu16
+						  ", network1:%" PRIu16 ", network2:%" PRIu16,
+						  this->headerExtensionIds.videoTiming,
+						  flags,
+						  encodeStart,
+						  encodeEnd,
+						  packetizationComplete,
+						  pacerExit,
+						  network1,
+						  network2);
+					}
+				}
+
 				MS_DUMP_CLEAN(indentation + 1, "</Extensions>");
 			}
 
@@ -426,6 +455,9 @@ namespace RTC
 
 			// Clone media SSRC.
 			clonedPacket->mediaSsrc = this->mediaSsrc;
+
+			// Clone estimated capture time.
+			clonedPacket->estimatedCaptureTimeMs = this->estimatedCaptureTimeMs;
 
 #ifdef MS_RTC_LOGGER_RTP
 			// Clone logger.
@@ -852,6 +884,12 @@ namespace RTC
 					case RTC::RtpHeaderExtensionUri::Type::MEDIASOUP_PACKET_ID:
 					{
 						this->headerExtensionIds.mediasoupPacketId = extension.id;
+						break;
+					}
+
+					case RTC::RtpHeaderExtensionUri::Type::VIDEO_TIMING:
+					{
+						this->headerExtensionIds.videoTiming = extension.id;
 						break;
 					}
 				}
@@ -1313,6 +1351,99 @@ namespace RTC
 			}
 
 			mediasoupPacketId = Utils::Byte::Get4Bytes(extenValue, 0);
+
+			return true;
+		}
+
+		bool Packet::ReadVideoTiming(
+		  uint8_t& flags,
+		  uint16_t& encodeStart,
+		  uint16_t& encodeEnd,
+		  uint16_t& packetizationComplete,
+		  uint16_t& pacerExit,
+		  uint16_t& network1,
+		  uint16_t& network2) const
+		{
+			MS_TRACE();
+
+			if (this->headerExtensionIds.videoTiming == 0)
+			{
+				return false;
+			}
+
+			uint8_t extenLen;
+			const uint8_t* extenValue = GetExtensionValue(this->headerExtensionIds.videoTiming, extenLen);
+
+			if (!extenValue || extenLen != 13)
+			{
+				return false;
+			}
+
+			flags                 = Utils::Byte::Get1Byte(extenValue, 0);
+			encodeStart           = Utils::Byte::Get2Bytes(extenValue, 1);
+			encodeEnd             = Utils::Byte::Get2Bytes(extenValue, 3);
+			packetizationComplete = Utils::Byte::Get2Bytes(extenValue, 5);
+			pacerExit             = Utils::Byte::Get2Bytes(extenValue, 7);
+			network1              = Utils::Byte::Get2Bytes(extenValue, 9);
+			network2              = Utils::Byte::Get2Bytes(extenValue, 11);
+
+			return true;
+		}
+
+		bool Packet::UpdateVideoTimingSfuEnterTime(int64_t nowMs) const
+		{
+			MS_TRACE();
+
+			if (this->estimatedCaptureTimeMs == 0 || this->headerExtensionIds.videoTiming == 0)
+			{
+				return false;
+			}
+
+			uint8_t extenLen;
+			uint8_t* extenValue = GetExtensionValue(this->headerExtensionIds.videoTiming, extenLen);
+
+			if (!extenValue || extenLen != 13)
+			{
+				return false;
+			}
+
+			const int64_t sfuEnterTime = nowMs - this->estimatedCaptureTimeMs;
+
+			if (sfuEnterTime < 0 || std::cmp_greater(sfuEnterTime, std::numeric_limits<uint16_t>::max()))
+			{
+				return false;
+			}
+
+			Utils::Byte::Set2Bytes(extenValue, 9, static_cast<uint16_t>(sfuEnterTime));
+
+			return true;
+		}
+
+		bool Packet::UpdateVideoTimingSfuExitTime(int64_t nowMs) const
+		{
+			MS_TRACE();
+
+			if (this->estimatedCaptureTimeMs == 0 || this->headerExtensionIds.videoTiming == 0)
+			{
+				return false;
+			}
+
+			uint8_t extenLen;
+			uint8_t* extenValue = GetExtensionValue(this->headerExtensionIds.videoTiming, extenLen);
+
+			if (!extenValue || extenLen != 13)
+			{
+				return false;
+			}
+
+			const int64_t sfuExitTime = nowMs - this->estimatedCaptureTimeMs;
+
+			if (sfuExitTime < 0 || std::cmp_greater(sfuExitTime, std::numeric_limits<uint16_t>::max()))
+			{
+				return false;
+			}
+
+			Utils::Byte::Set2Bytes(extenValue, 11, static_cast<uint16_t>(sfuExitTime));
 
 			return true;
 		}

@@ -394,6 +394,12 @@ test('router.pipeToRouter() succeeds with video', async () => {
 			encrypt: false,
 			parameters: {},
 		},
+		{
+			uri: 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing',
+			id: 12,
+			encrypt: false,
+			parameters: {},
+		},
 	]);
 
 	expect(pipeConsumer.type).toBe('pipe');
@@ -445,6 +451,12 @@ test('router.pipeToRouter() succeeds with video', async () => {
 		{
 			uri: 'urn:mediasoup:params:rtp-hdrext:packet-id',
 			id: 11,
+			encrypt: false,
+			parameters: {},
+		},
+		{
+			uri: 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing',
+			id: 12,
 			encrypt: false,
 			parameters: {},
 		},
@@ -644,6 +656,12 @@ test('router.createPipeTransport() with enableRtx succeeds', async () => {
 		{
 			uri: 'urn:mediasoup:params:rtp-hdrext:packet-id',
 			id: 11,
+			encrypt: false,
+			parameters: {},
+		},
+		{
+			uri: 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing',
+			id: 12,
 			encrypt: false,
 			parameters: {},
 		},

@@ -568,6 +568,45 @@ namespace RTC
 			bool ReadMediasoupPacketId(uint32_t& mediasoupPacketId) const;
 
 			/**
+			 * Reads http://www.webrtc.org/experiments/rtp-hdrext/video-timing. All
+			 * the values are ms deltas from the capture time of the frame.
+			 */
+			bool ReadVideoTiming(
+			  uint8_t& flags,
+			  uint16_t& encodeStart,
+			  uint16_t& encodeEnd,
+			  uint16_t& packetizationComplete,
+			  uint16_t& pacerExit,
+			  uint16_t& network1,
+			  uint16_t& network2) const;
+
+			/**
+			 * Writes the time this packet entered the SFU (network1 field of the
+			 * video-timing extension), relative to its estimated capture time.
+			 */
+			bool UpdateVideoTimingSfuEnterTime(int64_t nowMs) const;
+
+			/**
+			 * Writes the time this packet left the SFU (network2 field of the
+			 * video-timing extension), relative to its estimated capture time.
+			 */
+			bool UpdateVideoTimingSfuExitTime(int64_t nowMs) const;
+
+			/**
+			 * Capture time of the packet in local ms, estimated from the
+			 * video-timing extension. 0 if unknown.
+			 */
+			int64_t GetEstimatedCaptureTimeMs() const
+			{
+				return this->estimatedCaptureTimeMs;
+			}
+
+			void SetEstimatedCaptureTimeMs(int64_t estimatedCaptureTimeMs)
+			{
+				this->estimatedCaptureTimeMs = estimatedCaptureTimeMs;
+			}
+
+			/**
 			 * Whether this packet has payload.
 			 *
 			 * @remarks
@@ -1012,6 +1051,8 @@ namespace RTC
 			std::optional<int64_t> captureAtUs;
 			// SSRC of the media stream while the packet is RTX encoded.
 			std::optional<uint32_t> mediaSsrc;
+			// Capture time estimated out of the video-timing extension, in local ms.
+			int64_t estimatedCaptureTimeMs{ 0 };
 		};
 	} // namespace RTP
 } // namespace RTC

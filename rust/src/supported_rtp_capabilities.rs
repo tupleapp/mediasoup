@@ -372,6 +372,13 @@ pub fn get_supported_rtp_capabilities() -> RtpCapabilities {
                 preferred_encrypt: false,
                 direction: RtpHeaderExtensionDirection::SendRecv,
             },
+            RtpHeaderExtension {
+                kind: MediaKind::Video,
+                uri: RtpHeaderExtensionUri::VideoTiming,
+                preferred_id: 12,
+                preferred_encrypt: false,
+                direction: RtpHeaderExtensionDirection::SendRecv,
+            },
         ],
     }
 }

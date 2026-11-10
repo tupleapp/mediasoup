@@ -517,6 +517,12 @@ test('getProducerRtpParametersMapping(), getConsumableRtpParameters(), getConsum
 			encrypt: false,
 			parameters: {},
 		},
+		{
+			uri: 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing',
+			id: 12,
+			encrypt: false,
+			parameters: {},
+		},
 	]);
 
 	expect(pipeConsumerRtpParameters.rtcp).toEqual({

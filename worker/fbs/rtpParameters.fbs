@@ -73,6 +73,7 @@ enum RtpHeaderExtensionUri: uint8 {
     AbsCaptureTime,
     PlayoutDelay,
     MediasoupPacketId,
+    VideoTiming,
 }
 
 table RtpHeaderExtensionParameters {

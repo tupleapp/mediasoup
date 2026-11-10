@@ -23,6 +23,7 @@ namespace RTC
 			uint8_t absCaptureTime{ 0 };
 			uint8_t playoutDelay{ 0 };
 			uint8_t mediasoupPacketId{ 0 };
+			uint8_t videoTiming{ 0 };
 		};
 	} // namespace RTP
 } // namespace RTC

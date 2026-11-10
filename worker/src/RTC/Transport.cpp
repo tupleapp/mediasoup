@@ -805,6 +805,12 @@ namespace RTC
 					  producerRtpHeaderExtensionIds.absCaptureTime;
 				}
 
+				// NOTE: Same for video-timing.
+				if (producerRtpHeaderExtensionIds.videoTiming != 0)
+				{
+					this->recvRtpHeaderExtensionIds.videoTiming = producerRtpHeaderExtensionIds.videoTiming;
+				}
+
 				// Create status response.
 				auto responseOffset = FBS::Transport::CreateProduceResponse(
 				  request->GetBufferBuilder(), FBS::RtpParameters::Type(producer->GetType()));
@@ -2712,6 +2718,9 @@ namespace RTC
 		  /*isRetransmission*/ false,
 		  /*isProbation*/ false);
 #endif
+
+		// Update video-timing SFU exit time if present.
+		packet->UpdateVideoTimingSfuExitTime(this->shared->GetTimeMs());
 
 		if (this->senderTransportCongestionController)
 		{

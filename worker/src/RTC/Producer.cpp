@@ -190,6 +190,11 @@ namespace RTC
 			{
 				this->rtpHeaderExtensionIds.mediasoupPacketId = exten.id;
 			}
+
+			if (this->rtpHeaderExtensionIds.videoTiming == 0 && exten.type == RTC::RtpHeaderExtensionUri::Type::VIDEO_TIMING)
+			{
+				this->rtpHeaderExtensionIds.videoTiming = exten.id;
+			}
 		}
 
 		// Set the RTCP report generation interval.
@@ -1464,6 +1469,27 @@ namespace RTC
 						extensions.emplace_back(
 						  /*type*/ RTC::RtpHeaderExtensionUri::Type::VIDEO_ORIENTATION,
 						  /*id*/ static_cast<uint8_t>(RTC::RtpHeaderExtensionUri::Type::VIDEO_ORIENTATION),
+						  /*len*/ extenLen,
+						  /*value*/ bufferPtr);
+
+						bufferPtr += extenLen;
+					}
+				}
+
+				// Proxy http://www.webrtc.org/experiments/rtp-hdrext/video-timing.
+				//
+				// NOTE: Only once its capture time could be estimated, since the
+				// sending Transport rewrites the SFU exit time relative to it.
+				{
+					extenValue = packet->GetExtensionValue(this->rtpHeaderExtensionIds.videoTiming, extenLen);
+
+					if (extenValue && extenLen > 0 && packet->GetEstimatedCaptureTimeMs() != 0)
+					{
+						std::memcpy(bufferPtr, extenValue, extenLen);
+
+						extensions.emplace_back(
+						  /*type*/ RTC::RtpHeaderExtensionUri::Type::VIDEO_TIMING,
+						  /*id*/ static_cast<uint8_t>(RTC::RtpHeaderExtensionUri::Type::VIDEO_TIMING),
 						  /*len*/ extenLen,
 						  /*value*/ bufferPtr);
 

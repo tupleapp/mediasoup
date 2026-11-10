@@ -584,6 +584,9 @@ pub enum RtpHeaderExtensionUri {
     /// urn:mediasoup:params:rtp-hdrext:packet-id
     #[serde(rename = "urn:mediasoup:params:rtp-hdrext:packet-id")]
     MediasoupPacketId,
+    /// <http://www.webrtc.org/experiments/rtp-hdrext/video-timing>
+    #[serde(rename = "http://www.webrtc.org/experiments/rtp-hdrext/video-timing")]
+    VideoTiming,
 }
 
 impl FromStr for RtpHeaderExtensionUri {
@@ -606,6 +609,7 @@ impl FromStr for RtpHeaderExtensionUri {
             }
             "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay" => Ok(Self::PlayoutDelay),
             "urn:mediasoup:params:rtp-hdrext:packet-id" => Ok(Self::MediasoupPacketId),
+            "http://www.webrtc.org/experiments/rtp-hdrext/video-timing" => Ok(Self::VideoTiming),
             _ => Err(RtpHeaderExtensionUriParseError::Unsupported(s.to_string())),
         }
     }
@@ -638,6 +642,9 @@ impl RtpHeaderExtensionUri {
             }
             RtpHeaderExtensionUri::MediasoupPacketId => {
                 "urn:mediasoup:params:rtp-hdrext:packet-id"
+            }
+            RtpHeaderExtensionUri::VideoTiming => {
+                "http://www.webrtc.org/experiments/rtp-hdrext/video-timing"
             }
         }
     }

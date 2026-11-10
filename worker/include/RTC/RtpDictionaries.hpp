@@ -126,7 +126,8 @@ namespace RTC
 			VIDEO_ORIENTATION      = 8,
 			ABS_CAPTURE_TIME       = 9,
 			PLAYOUT_DELAY          = 10,
-			MEDIASOUP_PACKET_ID    = 11
+			MEDIASOUP_PACKET_ID    = 11,
+			VIDEO_TIMING           = 12
 		};
 
 	public:
