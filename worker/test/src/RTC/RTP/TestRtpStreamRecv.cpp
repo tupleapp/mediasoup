@@ -378,4 +378,68 @@ SCENARIO("RtpStreamRecv", "[rtp][rtpstream][rtpstreamrecv]")
 		listener.shouldTriggerFIR = false;
 		rtpStream.ReceivePacket(packet.get(), shared.GetTimeUs());
 	}
+
+	SECTION("a single spatial layer with temporal layers reports when it becomes active")
+	{
+		// A BWE managed SVC Consumer only bids again for an L1T3 stream on this
+		// event, so without it the Consumer may never get layers.
+		class ActivityListener : public RtpStreamRecvListener
+		{
+		public:
+			void OnRtpStreamSpatialLayerActivityChanged(
+			  RTC::RTP::RtpStreamRecv* /*rtpStream*/, uint8_t spatialLayer, bool isActive) override
+			{
+				this->changes.emplace_back(spatialLayer, isActive);
+			}
+
+		public:
+			std::vector<std::pair<uint8_t, bool>> changes;
+		};
+
+		int64_t nowUs{ 1000 * 1000 };
+		mocks::MockShared clockShared(/*getTimeUs*/
+		                              [&nowUs]() -> int64_t
+		                              {
+			                              return nowUs;
+		                              });
+
+		params.spatialLayers  = 1;
+		params.temporalLayers = 3;
+
+		ActivityListener listener;
+		RTC::RTP::RtpStreamRecv rtpStream(
+		  std::addressof(listener),
+		  std::addressof(clockShared),
+		  params,
+		  SendNackDelay,
+		  UseRtpInactivityCheck);
+
+		auto* timer = clockShared.GetTimer("rtp-stream-recv-spatial-layers-activity-check");
+
+		REQUIRE(timer);
+
+		alignas(4) uint8_t mediaBuffer[112]{ 0x80, 0x01, 0x00, 0x01, 0x00, 0x00,
+		                                     0x00, 0x04, 0x00, 0x00, 0x00, 0x05 };
+		std::unique_ptr<RTC::RTP::Packet> mediaPacket{ RTC::RTP::Packet::Parse(
+			mediaBuffer, sizeof(mediaBuffer), sizeof(mediaBuffer)) };
+
+		REQUIRE(mediaPacket);
+
+		// Spread in time, since a bitrate is measured over the period its samples
+		// span.
+		for (uint16_t seq{ 1 }; seq <= 30; ++seq)
+		{
+			mediaPacket->SetSequenceNumber(seq);
+			rtpStream.ReceivePacket(mediaPacket.get(), nowUs);
+			nowUs += 10 * 1000;
+		}
+
+		nowUs = timer->GetExpiresAtMs() * 1000;
+
+		REQUIRE(timer->EvaluateHasExpired());
+		REQUIRE(
+		  listener.changes == std::vector<std::pair<uint8_t, bool>>{
+		                        { 0, true }
+    });
+	}
 }

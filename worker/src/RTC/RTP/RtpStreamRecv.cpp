@@ -218,7 +218,7 @@ namespace RTC
 		      useRtpInactivityCheck ? shared->CreateTimer(this, "rtp-stream-recv-inactivity-check")
 					                      : nullptr),
 		    spatialLayersActivityCheckPeriodicTimer(
-		      GetSpatialLayers() > 1
+		      params.spatialLayers > 1 || params.temporalLayers > 1
 		        ? shared->CreateTimer(this, "rtp-stream-recv-spatial-layers-activity-check")
 						: nullptr),
 		    transmissionCounter(
@@ -245,7 +245,14 @@ namespace RTC
 			// A stream with more than a spatial layer carries all of them within the
 			// same SSRC, so the inactivity check above cannot tell that just one of
 			// them stopped. Watch their traffic separately.
-			if (GetSpatialLayers() > 1)
+			//
+			// Do it also for a single spatial layer with temporal layers, since the
+			// first activity change is what makes a BWE managed SVC Consumer bid
+			// again once the layer carries bitrate. Otherwise a Consumer whose
+			// allocations all ran before that is left with no layers until the
+			// available bitrate changes, which never happens on a transport carrying
+			// nothing else.
+			if (this->spatialLayersActivityCheckPeriodicTimer)
 			{
 				this->spatialLayersActivity.assign(GetSpatialLayers(), false);
 
