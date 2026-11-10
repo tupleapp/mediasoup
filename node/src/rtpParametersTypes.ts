@@ -325,7 +325,8 @@ export type RtpHeaderExtensionUri =
 	| 'urn:3gpp:video-orientation'
 	| 'http://www.webrtc.org/experiments/rtp-hdrext/abs-capture-time'
 	| 'http://www.webrtc.org/experiments/rtp-hdrext/playout-delay'
-	| 'urn:mediasoup:params:rtp-hdrext:packet-id';
+	| 'urn:mediasoup:params:rtp-hdrext:packet-id'
+	| 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing';
 
 /**
  * Defines a RTP header extension within the RTP parameters. The list of RTP

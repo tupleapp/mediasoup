@@ -417,6 +417,10 @@ export function rtpHeaderExtensionUriFromFbs(
 		case FbsRtpHeaderExtensionUri.MediasoupPacketId: {
 			return 'urn:mediasoup:params:rtp-hdrext:packet-id';
 		}
+
+		case FbsRtpHeaderExtensionUri.VideoTiming: {
+			return 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing';
+		}
 	}
 }
 
@@ -466,6 +470,10 @@ export function rtpHeaderExtensionUriToFbs(
 
 		case 'urn:mediasoup:params:rtp-hdrext:packet-id': {
 			return FbsRtpHeaderExtensionUri.MediasoupPacketId;
+		}
+
+		case 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing': {
+			return FbsRtpHeaderExtensionUri.VideoTiming;
 		}
 
 		default: {

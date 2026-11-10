@@ -316,6 +316,13 @@ const supportedRtpCapabilities: RouterRtpCapabilities = {
 			preferredEncrypt: false,
 			direction: 'sendrecv',
 		},
+		{
+			kind: 'video',
+			uri: 'http://www.webrtc.org/experiments/rtp-hdrext/video-timing',
+			preferredId: 12,
+			preferredEncrypt: false,
+			direction: 'sendrecv',
+		},
 	],
 };
 

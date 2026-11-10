@@ -218,6 +218,9 @@ impl FromFbs for RtpHeaderExtensionUri {
             rtp_parameters::RtpHeaderExtensionUri::MediasoupPacketId => {
                 RtpHeaderExtensionUri::MediasoupPacketId
             }
+            rtp_parameters::RtpHeaderExtensionUri::VideoTiming => {
+                RtpHeaderExtensionUri::VideoTiming
+            }
         }
     }
 }
@@ -257,6 +260,9 @@ impl ToFbs for RtpHeaderExtensionUri {
             }
             RtpHeaderExtensionUri::MediasoupPacketId => {
                 rtp_parameters::RtpHeaderExtensionUri::MediasoupPacketId
+            }
+            RtpHeaderExtensionUri::VideoTiming => {
+                rtp_parameters::RtpHeaderExtensionUri::VideoTiming
             }
         }
     }

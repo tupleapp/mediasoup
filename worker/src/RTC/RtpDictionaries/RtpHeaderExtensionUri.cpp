@@ -70,6 +70,11 @@ namespace RTC
 				return RtpHeaderExtensionUri::Type::MEDIASOUP_PACKET_ID;
 			}
 
+			case FBS::RtpParameters::RtpHeaderExtensionUri::VideoTiming:
+			{
+				return RtpHeaderExtensionUri::Type::VIDEO_TIMING;
+			}
+
 				NO_DEFAULT();
 		}
 	}
@@ -134,6 +139,11 @@ namespace RTC
 			case RtpHeaderExtensionUri::Type::MEDIASOUP_PACKET_ID:
 			{
 				return FBS::RtpParameters::RtpHeaderExtensionUri::MediasoupPacketId;
+			}
+
+			case RtpHeaderExtensionUri::Type::VIDEO_TIMING:
+			{
+				return FBS::RtpParameters::RtpHeaderExtensionUri::VideoTiming;
 			}
 
 				NO_DEFAULT();
